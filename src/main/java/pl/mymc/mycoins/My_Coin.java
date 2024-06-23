@@ -24,6 +24,7 @@ public final class My_Coin extends JavaPlugin {
     private static Permission perms = null;
     private MySQLDatabaseHandler dbHandler;
     private PlayerTimeTracker timeTracker;
+    private FileConfiguration config;
 
     @Override
     public void onLoad() {
@@ -32,7 +33,6 @@ public final class My_Coin extends JavaPlugin {
         String serverVersion = getServer().getBukkitVersion();
         MyCoinsLogger logger = new MyCoinsLogger(fullName, serverVersion, pluginName);
 
-        // Utwórz nowy manager zależności i załaduj zależności
         MyCoinsDependencyManager dm = new MyCoinsDependencyManager((URLClassLoader) getClass().getClassLoader(), logger);
         try {
             dm.loadMariaDb();
@@ -81,10 +81,10 @@ public final class My_Coin extends JavaPlugin {
                     "`id` int(11) NOT NULL AUTO_INCREMENT," +
                     "`player` varchar(255) NOT NULL," +
                     "`uuid` varchar(255) NOT NULL," +
-                    "`data` date NOT NULL," +
+                    "`data` date NOT NULL DEFAULT curdate()," +
                     "`joinTime` time NOT NULL," +
-                    "`quitTime` time NOT NULL," +
-                    "`totalTime` time NOT NULL," +
+                    "`quitTime` time DEFAULT NULL," +
+                    "`totalTime` time DEFAULT NULL," +
                     "PRIMARY KEY (`id`)" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
@@ -93,7 +93,7 @@ public final class My_Coin extends JavaPlugin {
         } catch (SQLException e) {
             logger.err("Nie udało się utworzyć tabeli w bazie danych!" + e.getMessage());
         }
-        timeTracker = new PlayerTimeTracker(dbHandler, logger);
+        timeTracker = new PlayerTimeTracker(dbHandler, logger, config);
         getServer().getPluginManager().registerEvents(timeTracker, this);
         logger.pluginStart();
         logger.checkServerType();
@@ -128,7 +128,7 @@ public final class My_Coin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        timeTracker = new PlayerTimeTracker(dbHandler, logger);
+        timeTracker = new PlayerTimeTracker(dbHandler, logger, config);
         getServer().getPluginManager().registerEvents(timeTracker, this);
         for (Player player : Bukkit.getOnlinePlayers()) {
             timeTracker.onPlayerQuit(new PlayerQuitEvent(player, ""));
