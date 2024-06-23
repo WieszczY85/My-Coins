@@ -1,5 +1,8 @@
 package pl.mymc.mycoins.events;
 
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 import org.bukkit.event.EventHandler;
@@ -7,18 +10,21 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.Instant;
 import java.time.LocalDate;
+
+import static org.bukkit.Bukkit.getServer;
 
 public class PlayerTimeTracker implements Listener {
     private final MySQLDatabaseHandler dbHandler;
     private final MyCoinsLogger logger;
+    public final FileConfiguration config;
 
-    public PlayerTimeTracker(MySQLDatabaseHandler dbHandler, MyCoinsLogger logger) {
+    public PlayerTimeTracker(MySQLDatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config) {
         this.dbHandler = dbHandler;
         this.logger = logger;
+        this.config = config;
     }
 
     @EventHandler
@@ -27,21 +33,13 @@ public class PlayerTimeTracker implements Listener {
         String playerUUID = event.getPlayer().getUniqueId().toString();
         Instant joinTime = Instant.now();
         LocalDate currentDate = LocalDate.now();
-        String dateString = currentDate.toString();
 
         try {
-            PreparedStatement statement = dbHandler.getConnection().prepareStatement("INSERT INTO `My-Coins` (player, uuid, data, joinTime) VALUES (?, ?, ?, ?);");
-            statement.setString(1, playerName);
-            statement.setString(2, playerUUID);
-            statement.setDate(3, java.sql.Date.valueOf(dateString));
-            statement.setLong(4, joinTime.getEpochSecond());
-            statement.executeUpdate();
+            dbHandler.savePlayerJoinTime(playerName, playerUUID, joinTime, currentDate);
         } catch (SQLException e) {
             logger.err("Nie udało się zapisać czasu wejścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
         }
     }
-
-
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
@@ -50,14 +48,18 @@ public class PlayerTimeTracker implements Listener {
         long quitTime = Instant.now().getEpochSecond();
 
         try {
-            PreparedStatement statement = dbHandler.getConnection().prepareStatement("UPDATE `My-Coins` SET quitTime = ? WHERE uuid = ? AND quitTime IS NULL;");
-            statement.setLong(1, quitTime);
-            statement.setString(2, playerUUID);
-            statement.executeUpdate();
+            dbHandler.savePlayerQuitTime(playerUUID, quitTime);
 
-            statement = dbHandler.getConnection().prepareStatement("UPDATE `My-Coins` SET totalTime = quitTime - joinTime WHERE uuid = ?;");
-            statement.setString(1, playerUUID);
-            statement.executeUpdate();
+            long totalTime = dbHandler.getPlayerTotalTime(playerUUID);
+            double rate = config.getDouble("reward.points_rate");
+            double reward = totalTime * rate;
+
+            RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+            if (rsp == null) {
+                return;
+            }
+            Economy econ = rsp.getProvider();
+            econ.depositPlayer(playerName, reward);
         } catch (SQLException e) {
             logger.err("Nie udało się zapisać czasu wyjścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
         }
