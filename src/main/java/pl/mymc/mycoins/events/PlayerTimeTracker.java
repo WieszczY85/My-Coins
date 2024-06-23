@@ -7,10 +7,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.LocalDate;
 
 public class PlayerTimeTracker implements Listener {
     private final MySQLDatabaseHandler dbHandler;
@@ -25,18 +25,23 @@ public class PlayerTimeTracker implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         String playerName = event.getPlayer().getName();
         String playerUUID = event.getPlayer().getUniqueId().toString();
-        long joinTime = Instant.now().getEpochSecond();
+        Instant joinTime = Instant.now();
+        LocalDate currentDate = LocalDate.now();
+        String dateString = currentDate.toString();
 
         try {
-            PreparedStatement statement = dbHandler.getConnection().prepareStatement("INSERT INTO `My-Coins` (player, uuid, joinTime) VALUES (?, ?, ?);");
+            PreparedStatement statement = dbHandler.getConnection().prepareStatement("INSERT INTO `My-Coins` (player, uuid, data, joinTime) VALUES (?, ?, ?, ?);");
             statement.setString(1, playerName);
             statement.setString(2, playerUUID);
-            statement.setLong(3, joinTime);
+            statement.setDate(3, java.sql.Date.valueOf(dateString));
+            statement.setLong(4, joinTime.getEpochSecond());
             statement.executeUpdate();
         } catch (SQLException e) {
-            logger.err("Błąd zapisu wejścia gracza do bazy danych" + e.getMessage());
+            logger.err("Nie udało się zapisać czasu wejścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
         }
     }
+
+
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
@@ -54,7 +59,7 @@ public class PlayerTimeTracker implements Listener {
             statement.setString(1, playerUUID);
             statement.executeUpdate();
         } catch (SQLException e) {
-            logger.err("Błąd zapisu wyjścia gracza do bazy danych" + e.getMessage());
+            logger.err("Nie udało się zapisać czasu wyjścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
         }
     }
 }

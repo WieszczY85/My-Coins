@@ -76,7 +76,7 @@ public final class My_Coin extends JavaPlugin {
         }
         try {
             Statement statement = dbHandler.getConnection().createStatement();
-            logger.info("Sprawdzanie tableli " + pluginName + " w bazie danych");
+            logger.info("Sprawdzanie tabeli " + pluginName + " w bazie danych");
             String createTable = "CREATE TABLE IF NOT EXISTS `My-Coins` (" +
                     "`id` int(11) NOT NULL AUTO_INCREMENT," +
                     "`player` varchar(255) NOT NULL," +
