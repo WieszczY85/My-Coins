@@ -1,6 +1,9 @@
 package pl.mymc.mycoins.databases;
 
 import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDate;
+
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class MySQLDatabaseHandler {
@@ -33,4 +36,37 @@ public class MySQLDatabaseHandler {
     public Connection getConnection() {
         return connection;
     }
+
+    public void savePlayerJoinTime(String playerName, String playerUUID, Instant joinTime, LocalDate currentDate) throws SQLException {
+        PreparedStatement statement = getConnection().prepareStatement("INSERT INTO `My-Coins` (player, uuid, data, joinTime) VALUES (?, ?, ?, ?);");
+        statement.setString(1, playerName);
+        statement.setString(2, playerUUID);
+        statement.setDate(3, java.sql.Date.valueOf(currentDate.toString()));
+        statement.setLong(4, joinTime.getEpochSecond());
+        statement.executeUpdate();
+    }
+
+    public void savePlayerQuitTime(String playerUUID, long quitTime) throws SQLException {
+        PreparedStatement statement = getConnection().prepareStatement("UPDATE `My-Coins` SET quitTime = ? WHERE uuid = ? AND quitTime IS NULL;");
+        statement.setLong(1, quitTime);
+        statement.setString(2, playerUUID);
+        statement.executeUpdate();
+
+        statement = getConnection().prepareStatement("UPDATE `My-Coins` SET totalTime = quitTime - joinTime WHERE uuid = ?;");
+        statement.setString(1, playerUUID);
+        statement.executeUpdate();
+    }
+
+    public long getPlayerTotalTime(String playerUUID) throws SQLException {
+        PreparedStatement statement = getConnection().prepareStatement("SELECT totalTime FROM `My-Coins` WHERE uuid = ?;");
+        statement.setString(1, playerUUID);
+        ResultSet rs = statement.executeQuery();
+
+        if (rs.next()) {
+            return rs.getLong("totalTime");
+        } else {
+            return 0;
+        }
+    }
+
 }
