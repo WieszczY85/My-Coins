@@ -3,7 +3,7 @@ package pl.mymc.mycoins;
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
 import pl.mymc.mycoins.helpers.MyCoinsDependencyManager;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
-import pl.mymc.mycoins.helpers.VersionChecker;
+import pl.mymc.mycoins.helpers.MyCoinsVersionChecker;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
@@ -48,11 +48,12 @@ public final class My_Coin extends JavaPlugin {
         String serverVersion = getServer().getBukkitVersion();
 
         FileConfiguration config = getConfig();
-        String currentVersion = config.getString("version");
+        boolean checkForUpdates = config.getBoolean("checkForUpdates");
+        boolean autoDownloadUpdates = config.getBoolean("autoDownloadUpdates");
+
+        String currentVersion = getDescription().getVersion();
 
         MyCoinsLogger logger = new MyCoinsLogger(fullName, serverVersion, pluginName);
-        VersionChecker.checkVersion(currentVersion, logger);
-        logger.info("Current version: " + currentVersion);
 
         if (!setupEconomy() ) {
             logger.err("Wyłączono, ponieważ nie znaleziono zależności Vault");
@@ -66,11 +67,11 @@ public final class My_Coin extends JavaPlugin {
             dbHandler.openConnection();
             logger.success("Połączono z bazą danych!");
         } catch (SQLException | ClassNotFoundException e) {
-            logger.err("Nie udało się połączyć z bazą danych!");
-            e.printStackTrace();
+            logger.err("Nie udało się połączyć z bazą danych!" + e.getMessage());
         }
         logger.pluginStart();
         logger.checkServerType();
+        MyCoinsVersionChecker.checkVersion(pluginName, currentVersion, logger, checkForUpdates, autoDownloadUpdates);
     }
 
     private boolean setupEconomy() {
@@ -108,8 +109,7 @@ public final class My_Coin extends JavaPlugin {
                 logger.warning("Połączenie z bazą danych zamknięte!");
             }
         } catch (SQLException e) {
-            logger.err("Nie udało się zamknąć połączenia z bazą danych!");
-            e.printStackTrace();
+            logger.err("Nie udało się zamknąć połączenia z bazą danych!" + e.getMessage());
         }
     }
 }
