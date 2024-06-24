@@ -16,23 +16,25 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.net.URLClassLoader;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public final class My_Coin extends JavaPlugin {
-    private MyCoinsLogger logger;
+    private final MyCoinsLogger logger;
     private static Economy econ = null;
     private static Permission perms = null;
     private MySQLDatabaseHandler dbHandler;
     private PlayerTimeTracker timeTracker;
     private FileConfiguration config;
 
-    @Override
-    public void onLoad() {
+    public My_Coin() {
         String fullName = getDescription().getFullName();
         String pluginName = getDescription().getRawName();
         String serverVersion = getServer().getBukkitVersion();
-        MyCoinsLogger logger = new MyCoinsLogger(fullName, serverVersion, pluginName);
+        this.logger = new MyCoinsLogger(fullName, serverVersion, pluginName);
+    }
 
+    @Override
+    public void onLoad() {
+        saveDefaultConfig();
         MyCoinsDependencyManager dm = new MyCoinsDependencyManager((URLClassLoader) getClass().getClassLoader(), logger);
         try {
             dm.loadMariaDb();
@@ -47,76 +49,46 @@ public final class My_Coin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        String fullName = getDescription().getFullName();
         String pluginName = getDescription().getRawName();
-        String serverVersion = getServer().getBukkitVersion();
+        String currentVersion = getDescription().getVersion();
 
         FileConfiguration config = getConfig();
         boolean checkForUpdates = config.getBoolean("checkForUpdates");
         boolean autoDownloadUpdates = config.getBoolean("autoDownloadUpdates");
 
-        String currentVersion = getDescription().getVersion();
-
-        MyCoinsLogger logger = new MyCoinsLogger(fullName, serverVersion, pluginName);
-
-        if (!setupEconomy() ) {
+        if (!setupService(Economy.class)) {
             logger.err("Wyłączono, ponieważ nie znaleziono zależności Vault");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        setupPermissions();
+        setupService(Permission.class);
 
-        dbHandler = new MySQLDatabaseHandler(getConfig());
+        dbHandler = new MySQLDatabaseHandler(config, logger);
         try {
-            dbHandler.openConnection();
-            logger.success("Połączono z bazą danych!");
-        } catch (SQLException | ClassNotFoundException e) {
-            logger.err("Nie udało się połączyć z bazą danych!" + e.getMessage());
-        }
-        try {
-            Statement statement = dbHandler.getConnection().createStatement();
-            logger.info("Sprawdzanie tabeli " + pluginName + " w bazie danych");
-            String createTable = "CREATE TABLE IF NOT EXISTS `My-Coins` (" +
-                    "`id` int(11) NOT NULL AUTO_INCREMENT," +
-                    "`player` varchar(255) NOT NULL," +
-                    "`uuid` varchar(255) NOT NULL," +
-                    "`data` date NOT NULL DEFAULT curdate()," +
-                    "`joinTime` time NOT NULL," +
-                    "`quitTime` time DEFAULT NULL," +
-                    "`totalTime` time DEFAULT NULL," +
-                    "PRIMARY KEY (`id`)" +
-                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-
-            statement.execute(createTable);
-            logger.info("Zakończono operacje na tabeli");
+            dbHandler.openConnectionAndCreateTable();
         } catch (SQLException e) {
-            logger.err("Nie udało się utworzyć tabeli w bazie danych!" + e.getMessage());
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
+
         timeTracker = new PlayerTimeTracker(dbHandler, logger, config);
         getServer().getPluginManager().registerEvents(timeTracker, this);
         logger.pluginStart();
         logger.checkServerType();
         MyCoinsVersionChecker.checkVersion(pluginName, currentVersion, logger, checkForUpdates, autoDownloadUpdates);
     }
-
-    private boolean setupEconomy() {
-        if (Bukkit.getServer().getPluginManager().getPlugin("Vault") == null) {
-            return false;
-        }
-        final RegisteredServiceProvider<Economy> rsp = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
+    private boolean setupService(Class<?> serviceClass) {
+        RegisteredServiceProvider<?> rsp = getServer().getServicesManager().getRegistration(serviceClass);
         if (rsp == null) {
             return false;
         }
-        econ = rsp.getProvider();
-        return econ != null;
-    }
-
-
-    private boolean setupPermissions() {
-        RegisteredServiceProvider<Permission> rsp = getServer().getServicesManager().getRegistration(Permission.class);
-        perms = rsp.getProvider();
-        return perms != null;
+        if (serviceClass == Economy.class) {
+            econ = (Economy) rsp.getProvider();
+        } else if (serviceClass == Permission.class) {
+            perms = (Permission) rsp.getProvider();
+        }
+        return rsp.getProvider() != null;
     }
 
     public static Economy getEconomy() {
@@ -128,19 +100,14 @@ public final class My_Coin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        timeTracker = new PlayerTimeTracker(dbHandler, logger, config);
-        getServer().getPluginManager().registerEvents(timeTracker, this);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            timeTracker.onPlayerQuit(new PlayerQuitEvent(player, ""));
-        }
-        try {
-            if (dbHandler.getConnection() != null && !dbHandler.getConnection().isClosed()) {
-                dbHandler.getConnection().close();
-                logger.warning("Połączenie z bazą danych zamknięte!");
+            try {
+                timeTracker.handlePlayerQuit(player);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-        } catch (SQLException e) {
-            logger.err("Nie udało się zamknąć połączenia z bazą danych!" + e.getMessage());
         }
+        dbHandler.closeConnection();
         logger.err(getDescription().getName() +" Disabled Version "+ getDescription().getVersion());
     }
 }

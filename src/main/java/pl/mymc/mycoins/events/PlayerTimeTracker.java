@@ -2,6 +2,8 @@ package pl.mymc.mycoins.events;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
@@ -18,12 +20,10 @@ import static org.bukkit.Bukkit.getServer;
 
 public class PlayerTimeTracker implements Listener {
     private final MySQLDatabaseHandler dbHandler;
-    private final MyCoinsLogger logger;
     public final FileConfiguration config;
 
     public PlayerTimeTracker(MySQLDatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config) {
         this.dbHandler = dbHandler;
-        this.logger = logger;
         this.config = config;
     }
 
@@ -32,36 +32,42 @@ public class PlayerTimeTracker implements Listener {
         String playerName = event.getPlayer().getName();
         String playerUUID = event.getPlayer().getUniqueId().toString();
         Instant joinTime = Instant.now();
-        LocalDate currentDate = LocalDate.now();
 
-        try {
-            dbHandler.savePlayerJoinTime(playerName, playerUUID, joinTime, currentDate);
-        } catch (SQLException e) {
-            logger.err("Nie udało się zapisać czasu wejścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
-        }
+        LocalDate currentDate = LocalDate.now();
+        dbHandler.savePlayerJoinTime(playerName, playerUUID, joinTime, currentDate);
+
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        String playerName = event.getPlayer().getName();
-        String playerUUID = event.getPlayer().getUniqueId().toString();
+    public void onPlayerKick(PlayerKickEvent event) throws SQLException {
+        handlePlayerQuit(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) throws SQLException {
+        handlePlayerQuit(event.getPlayer());
+    }
+
+    public void handlePlayerQuit(Player player) throws SQLException {
+        String playerName = player.getName();
+        String playerUUID = player.getUniqueId().toString();
         long quitTime = Instant.now().getEpochSecond();
 
-        try {
-            dbHandler.savePlayerQuitTime(playerUUID, quitTime);
+        dbHandler.savePlayerQuitTime(playerUUID, quitTime);
 
-            long totalTime = dbHandler.getPlayerTotalTime(playerUUID);
-            double rate = config.getDouble("reward.points_rate");
-            double reward = totalTime * rate;
+        long totalTime = dbHandler.getPlayerTotalTime(playerUUID);
+        double rate = config.getDouble("reward.points_rate");
+        double reward = totalTime * rate;
 
-            RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-            if (rsp == null) {
-                return;
-            }
-            Economy econ = rsp.getProvider();
-            econ.depositPlayer(playerName, reward);
-        } catch (SQLException e) {
-            logger.err("Nie udało się zapisać czasu wyjścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
+        depositPlayerReward(playerName, reward);
+    }
+
+    private void depositPlayerReward(String playerName, double reward) {
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            return;
         }
+        Economy econ = rsp.getProvider();
+        econ.depositPlayer(playerName, reward);
     }
 }
