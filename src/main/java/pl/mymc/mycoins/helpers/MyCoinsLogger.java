@@ -8,10 +8,15 @@ public class MyCoinsLogger {
     private final String fullName;
     private final String serverVersion;
     private final String plName;
-    public MyCoinsLogger(String fullName, String serverVersion, String pluginName) {
+    private final boolean debugMode;
+    private final MyCoinsServerChecker serverChecker;
+
+    public MyCoinsLogger(String fullName, String serverVersion, String pluginName, boolean debugMode) {
         this.fullName = fullName;
         this.plName = pluginName;
         this.serverVersion = serverVersion;
+        this.debugMode = debugMode;
+        this.serverChecker = new MyCoinsServerChecker(serverVersion);
     }
 
     public void clear(String s) {
@@ -40,6 +45,13 @@ public class MyCoinsLogger {
     public void log(String s) {
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "[" + plName + "] " + s));
     }
+
+    public void debug(String s) {
+        if (debugMode) {
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "[" + plName + "] [DEBUG] &e&l" + s));
+        }
+    }
+
     public void pluginStart() {
         clear("");
         clear("&6  __  __               _____      _           ");
@@ -52,24 +64,28 @@ public class MyCoinsLogger {
         clear("&6         |___/                                ");
         clear("&6 ");
         clear("&a» " + fullName + " enabled,");
+        displayServerType();
 
     }
-    public void checkServerType() {
-        try {
-            Class.forName("com.destroystokyo.paper.event.server.PaperServerListPingEvent");
-            clear("&a       running on Paper " + serverVersion);
-            clear("&a             and utilizing its optimizations");
-            clear("");
-        } catch (ClassNotFoundException exx) {
-            try {
-                Class.forName("org.bukkit.Bukkit");
-                clear("&a       running on Spigot/Bukkit " + serverVersion);
+    public void displayServerType() {
+        String serverType = serverChecker.checkServerType();
+        switch (serverType) {
+            case "Paper":
+                clear("&a       running on Paper " + serverVersion);
                 clear("&a             and utilizing its optimizations");
-                clear("");
-            } catch (ClassNotFoundException exxx) {
+                break;
+            case "Spigot":
+                clear("&a       running on Spigot " + serverVersion);
+                clear("&a             and utilizing its optimizations");
+                break;
+            case "Bukkit":
+                clear("&a       running on Bukkit " + serverVersion);
+                clear("&a             and utilizing its optimizations");
+                break;
+            default:
                 clear("&a       running on Unknown server type " + serverVersion);
-                clear("");
-            }
+                break;
         }
+        clear("");
     }
 }

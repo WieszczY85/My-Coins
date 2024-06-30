@@ -1,9 +1,8 @@
 package pl.mymc.mycoins;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerQuitEvent;
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
-import pl.mymc.mycoins.events.PlayerTimeTracker;
+import pl.mymc.mycoins.myc.PlayerTimeTracker;
 import pl.mymc.mycoins.helpers.MyCoinsDependencyManager;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 import pl.mymc.mycoins.helpers.MyCoinsVersionChecker;
@@ -16,8 +15,19 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.net.URLClassLoader;
 import java.sql.SQLException;
+import java.time.Duration;
+
+import static org.codehaus.plexus.util.FileUtils.extension;
 
 public final class My_Coin extends JavaPlugin {
+
+    //TODO:
+    // * Debug - przenieść część instniejących logów (zmniejszenie spamu w konsoli)
+    // * Dodać multiplikacje dla rang + weryfikacja rang z Vault
+    // * Dodać obsługę "daily limit"
+    // * Dodać sprawdzanie czy gracz się porusza i jeśli nie to czy ma AFK
+    // * Dodać obsługe AFK z EternalsCore i EssentialsX
+
     private final MyCoinsLogger logger;
     private static Economy econ = null;
     private static Permission perms = null;
@@ -29,7 +39,8 @@ public final class My_Coin extends JavaPlugin {
         String fullName = getDescription().getFullName();
         String pluginName = getDescription().getRawName();
         String serverVersion = getServer().getBukkitVersion();
-        this.logger = new MyCoinsLogger(fullName, serverVersion, pluginName);
+        boolean debugMode = config.getBoolean("debug");
+        this.logger = new MyCoinsLogger(fullName, serverVersion, pluginName, debugMode);
     }
 
     @Override
@@ -66,17 +77,14 @@ public final class My_Coin extends JavaPlugin {
         dbHandler = new MySQLDatabaseHandler(config, logger);
         try {
             dbHandler.openConnectionAndCreateTable();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
 
         timeTracker = new PlayerTimeTracker(dbHandler, logger, config);
         getServer().getPluginManager().registerEvents(timeTracker, this);
-        logger.pluginStart();
-        logger.checkServerType();
         MyCoinsVersionChecker.checkVersion(pluginName, currentVersion, logger, checkForUpdates, autoDownloadUpdates);
+        logger.pluginStart();
     }
     private boolean setupService(Class<?> serviceClass) {
         RegisteredServiceProvider<?> rsp = getServer().getServicesManager().getRegistration(serviceClass);
