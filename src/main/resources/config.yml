@@ -16,3 +16,5 @@ database:
 # Ustawienia sprawdzania i automatycznej aktualizacji
 checkForUpdates: true
 autoDownloadUpdates: false
+# Tryb debugowania ustawiony na true daje więcej opisów działań w konsoli
+debug: false
