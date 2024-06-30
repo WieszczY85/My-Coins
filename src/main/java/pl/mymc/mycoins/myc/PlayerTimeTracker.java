@@ -1,4 +1,4 @@
-package pl.mymc.mycoins.events;
+package pl.mymc.mycoins.myc;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.file.FileConfiguration;
