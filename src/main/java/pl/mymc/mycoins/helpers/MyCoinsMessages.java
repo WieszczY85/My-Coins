@@ -5,17 +5,18 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
+
+import java.sql.SQLException;
 
 public class MyCoinsMessages {
-    private final String plName;
-    private final boolean debugMode;
     private final MiniMessage miniMessage;
     private final FileConfiguration localConfig;
+    private final MySQLDatabaseHandler dbHandler;
 
-    public MyCoinsMessages(String pluginName, boolean debugMode, FileConfiguration localConfig) {
-        this.plName = pluginName;
+    public MyCoinsMessages(String pluginName, boolean debugMode, FileConfiguration localConfig, MySQLDatabaseHandler dbHandler) {
         this.localConfig = localConfig;
-        this.debugMode = debugMode;
+        this.dbHandler = dbHandler;
         this.miniMessage = MiniMessage.miniMessage();
     }
 
@@ -41,6 +42,12 @@ public class MyCoinsMessages {
     }
     public void sendDailyLimitMessage(Player player) {
         sendPlayerMessage(player, "dailyLimit");
+    }
+    public void sendRemainingDailyLimit(Player player) throws SQLException {
+        double remainingReward = dbHandler.getPlayerDailyReward(player.getUniqueId().toString());
+        String message = getMessage("remainingDailyLimit").replace("%remainingReward%", String.valueOf(remainingReward));
+        Component component = miniMessage.deserialize(message);
+        player.sendMessage(component);
     }
 
 }

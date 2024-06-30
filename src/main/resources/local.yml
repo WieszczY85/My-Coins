@@ -2,3 +2,4 @@
 
 prefix: "My-Coins"
 dailyLimit: "Osiągnąłeś dzienny limit nagród. Wróć jutro po więcej!"
+remainingDailyLimit: "Dzisiaj możesz jeszcze zdobyć %remainingReward% punktów nagrody"

@@ -31,20 +31,20 @@ public class PlayerTimeTracker implements Listener {
         this.config = config;
         this.logger = logger;
         boolean debugMode = config.getBoolean("debug");
-        this.sm = new MyCoinsMessages(getName(), debugMode, localConfig);
+        this.sm = new MyCoinsMessages(getName(), debugMode, localConfig, dbHandler);
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) throws SQLException {
-        String playerName = event.getPlayer().getName();
-        String playerUUID = event.getPlayer().getUniqueId().toString();
+        Player player = event.getPlayer();
+        String playerName = player.getName();
+        String playerUUID = player.getUniqueId().toString();
         Instant joinTime = Instant.now();
 
         LocalDate currentDate = LocalDate.now();
         dbHandler.savePlayerJoinTime(playerName, playerUUID, joinTime, currentDate);
         dbHandler.addNewDailyRewardEntry(playerUUID, config.getDouble("reward.daily_limit"));
-        double remainingReward = dbHandler.getPlayerDailyReward(playerUUID);
-        event.getPlayer().sendMessage("Witaj na serwerze! Dzisiaj możesz jeszcze zdobyć " + remainingReward + " punktów nagrody.");
+        sm.sendRemainingDailyLimit(player);
     }
 
     @EventHandler
