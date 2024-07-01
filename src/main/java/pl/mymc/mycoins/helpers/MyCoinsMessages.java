@@ -10,14 +10,15 @@ import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
 import java.sql.SQLException;
 
 public class MyCoinsMessages {
-    private final MiniMessage miniMessage;
     private final FileConfiguration localConfig;
+    private final MiniMessage minimessage;
     private final MySQLDatabaseHandler dbHandler;
+
 
     public MyCoinsMessages(String pluginName, boolean debugMode, FileConfiguration localConfig, MySQLDatabaseHandler dbHandler) {
         this.localConfig = localConfig;
         this.dbHandler = dbHandler;
-        this.miniMessage = MiniMessage.miniMessage();
+        this.minimessage = MiniMessage.miniMessage();
     }
 
     public String getMessage(String key) {
@@ -27,13 +28,13 @@ public class MyCoinsMessages {
 
     public void sendPlayerMessage(Player player, String key) {
         String message = getMessage(key);
-        Component component = miniMessage.deserialize(message);
+        Component component = minimessage.deserialize(message);
         player.sendMessage(component);
     }
 
     public void sendAdminMessage(String key) {
         String message = getMessage(key);
-        Component component = miniMessage.deserialize(message);
+        Component component = minimessage.deserialize(message);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasPermission("mycoins.admin")) {
                 player.sendMessage(component);
@@ -46,7 +47,7 @@ public class MyCoinsMessages {
     public void sendRemainingDailyLimit(Player player) throws SQLException {
         double remainingReward = dbHandler.getPlayerDailyReward(player.getUniqueId().toString());
         String message = getMessage("remainingDailyLimit").replace("%remainingReward%", String.valueOf(remainingReward));
-        Component component = miniMessage.deserialize(message);
+        Component component = minimessage.deserialize(message);
         player.sendMessage(component);
     }
 
