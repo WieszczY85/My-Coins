@@ -25,6 +25,7 @@ public class PlayerTimeTracker implements Listener {
     public final FileConfiguration config;
     private final MyCoinsLogger logger;
     private final MyCoinsMessages sm;
+    private final RankMultiplier rankMultiplier;
 
     public PlayerTimeTracker(MySQLDatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config, FileConfiguration localConfig) {
         this.dbHandler = dbHandler;
@@ -32,6 +33,7 @@ public class PlayerTimeTracker implements Listener {
         this.logger = logger;
         boolean debugMode = config.getBoolean("debug");
         this.sm = new MyCoinsMessages(getName(), debugMode, localConfig, dbHandler);
+        this.rankMultiplier = new RankMultiplier(config);
     }
 
     @EventHandler
@@ -63,20 +65,24 @@ public class PlayerTimeTracker implements Listener {
 
         dbHandler.savePlayerQuitTime(playerUUID, quitTime);
 
-        long totalTime = dbHandler.getPlayerTotalTime(playerUUID);
-        double rate = config.getDouble("reward.points_rate");
-        double reward = totalTime * rate;
-        double dailyLimit = config.getDouble("reward.daily_limit");
+        long sessionTimeInSeconds = dbHandler.getSessionTime(playerUUID, quitTime);
+        long sessionTimeInMinutes = sessionTimeInSeconds / 60;
 
-        if (dbHandler.getPlayerDailyReward(playerUUID) + reward > dailyLimit) {
-            reward = dailyLimit - dbHandler.getPlayerDailyReward(playerUUID);
+        double rate = config.getDouble("reward.points_rate");
+        double reward = sessionTimeInMinutes  * rate;
+        double dailyLimit = dbHandler.getPlayerDailyReward(playerUUID);
+
+        if (dailyLimit + reward > config.getDouble("reward.daily_limit")) {
+            reward = config.getDouble("reward.daily_limit") - dailyLimit;
             sm.sendDailyLimitMessage(player);
         }
 
-        dbHandler.updateRemainingReward(playerUUID, reward);
+        reward *= rankMultiplier.getMultiplier(player);
+
+        dbHandler.handleDailyReward(playerUUID, reward);
+
         depositPlayerReward(player, reward);
     }
-
 
     private void depositPlayerReward(Player playerName, double reward) {
         boolean debugMode  = config.getBoolean("debug");
