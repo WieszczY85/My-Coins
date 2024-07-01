@@ -1,6 +1,11 @@
 # Ustalenia przeliczników i limitów dla graczy
 reward:
+  daily_limit: 1000
   points_rate: 1.0
+  multipliers:
+    gracz: 1.05
+    vip: 1.15
+    svip: 1.25
 
 # Ustawienia niezbędnyhc informacji do łaczenia z bazą danych
 database:
