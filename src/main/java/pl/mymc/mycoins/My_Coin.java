@@ -9,6 +9,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
+import pl.mymc.mycoins.databases.SQLiteDatabaseHandler;
 import pl.mymc.mycoins.myc.PlayerTimeTracker;
 import pl.mymc.mycoins.helpers.MyCoinsDependencyManager;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
@@ -19,7 +20,6 @@ import net.milkbowl.vault.permission.Permission;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLClassLoader;
 import java.sql.SQLException;
 
 
@@ -41,6 +41,7 @@ public final class My_Coin extends JavaPlugin {
     private final boolean checkForUpdates;
     private final boolean autoDownloadUpdates;
     private FileConfiguration localConfig;
+    private final String dbType;
 
     public My_Coin() {
         String fullName = getDescription().getFullName();
@@ -51,6 +52,7 @@ public final class My_Coin extends JavaPlugin {
         this.checkForUpdates = config.getBoolean("checkForUpdates");
         this.autoDownloadUpdates = config.getBoolean("autoDownloadUpdates");
         this.logger = new MyCoinsLogger(fullName, serverVersion, pluginName, debugMode);
+        this.dbType = config.getString("database.type");
     }
 
     @Override
