@@ -57,7 +57,7 @@ public final class My_Coin extends JavaPlugin {
     public void onLoad() {
         saveDefaultConfig();
         createLocalConfig();
-        MyCoinsDependencyManager dm = new MyCoinsDependencyManager((URLClassLoader) getClass().getClassLoader(), logger);
+        MyCoinsDependencyManager dm = new MyCoinsDependencyManager(logger);
         try {
             dm.loadMariaDb();
             dm.loadAdventureApi();
