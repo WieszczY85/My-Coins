@@ -101,7 +101,7 @@ public class MySQLDatabaseHandler {
         }catch (SQLException | ClassNotFoundException e) {
             logger.err("Nie udało się połączyć z bazą danych!" + e.getMessage());
         }
-        logger.success("Połączono z bazą danych!");
+        logger.success("Połączono z bazą danych MySQL/MariaDB!");
         createTable();
     }
 
