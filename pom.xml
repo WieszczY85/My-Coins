@@ -11,7 +11,7 @@
 
   <name>My-Coins</name>
 
-    <description>Plugin na nagradzanie graczy walutą My-Coins za czas spędzony na serwerze</description>
+    <description>Plugin na nagradzanie graczy walutą gry za czas spędzony na serwerze</description>
     <properties>
     <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -89,7 +89,6 @@
           <groupId>net.kyori</groupId>
           <artifactId>adventure-text-minimessage</artifactId>
           <version>4.17.0</version>
-          <scope>provided</scope>
       </dependency>
       <dependency>
           <groupId>net.kyori</groupId>
@@ -125,6 +124,37 @@
           <groupId>com.eternalcode</groupId>
           <artifactId>gitcheck</artifactId>
           <version>1.0.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <version>5.9.3</version>
+          <scope>test</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-api</artifactId>
+          <version>1.1.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-impl</artifactId>
+          <version>1.1.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-connector-basic</artifactId>
+          <version>1.1.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-transport-file</artifactId>
+          <version>1.1.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-transport-http</artifactId>
+          <version>1.1.0</version>
       </dependency>
   </dependencies>
 </project>
