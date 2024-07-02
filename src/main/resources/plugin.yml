@@ -1,9 +1,9 @@
 name: My-Coins
 version: '${project.version}'
 main: pl.mymc.mycoins.My_Coin
-api-version: '1.20'
+api-version: '1.21'
 authors: [WieszczY, mxLega]
-description: Plugin na nagradzanie graczy walutą gry za czas spędzony na serwerze
+description: Plugin do nagradzania graczy walutą gry za czas spędzony na serwerze
 dependencies:
   server:
     Vault:

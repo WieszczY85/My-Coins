@@ -43,17 +43,23 @@ public final class My_Coin extends JavaPlugin {
     private final boolean autoDownloadUpdates;
     private FileConfiguration localConfig;
     private final String dbType;
+    public final String fullName;
+    public final String pluginName;
+    public final String serverVersion;
+    public final String currentVersion;
 
     public My_Coin() {
-        String fullName = getDescription().getFullName();
-        String pluginName = getDescription().getRawName();
-        String serverVersion = getServer().getBukkitVersion();
+        this.fullName = getDescription().getFullName();
+        this.pluginName = getDescription().getRawName();
+        this.serverVersion = getServer().getBukkitVersion();
+        this.currentVersion = getDescription().getVersion();
         this.config = getConfig();
         this.debugMode = config.getBoolean("debug");
         this.checkForUpdates = config.getBoolean("checkForUpdates");
         this.autoDownloadUpdates = config.getBoolean("autoDownloadUpdates");
         this.logger = new MyCoinsLogger(fullName, serverVersion, pluginName, debugMode);
         this.dbType = config.getString("database.type");
+
     }
 
     @Override
@@ -76,9 +82,6 @@ public final class My_Coin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        String pluginName = getDescription().getRawName();
-        String currentVersion = getDescription().getVersion();
-
         if (!setupService(Economy.class)) {
             logger.err("Wyłączono, ponieważ nie znaleziono zależności Vault");
             getServer().getPluginManager().disablePlugin(this);

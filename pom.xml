@@ -10,8 +10,7 @@
   <packaging>jar</packaging>
 
   <name>My-Coins</name>
-
-    <description>Plugin na nagradzanie graczy walutą gry za czas spędzony na serwerze</description>
+    <description>Plugin do nagradzania graczy walutą gry za czas spędzony na serwerze</description>
     <properties>
     <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,7 +75,7 @@
       <dependency>
           <groupId>io.papermc.paper</groupId>
           <artifactId>paper-api</artifactId>
-          <version>1.20.6-R0.1-SNAPSHOT</version>
+          <version>1.21-R0.1-SNAPSHOT</version>
           <scope>provided</scope>
       </dependency>
       <dependency>
