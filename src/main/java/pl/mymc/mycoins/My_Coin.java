@@ -154,7 +154,7 @@ public final class My_Coin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             try {
                 timeTracker.handlePlayerQuit(player);
-            } catch (SQLException e) {
+            } catch (SQLException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }

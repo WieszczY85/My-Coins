@@ -37,7 +37,7 @@ public class PlayerTimeTracker implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException {
+    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException, ClassNotFoundException {
         Player player = event.getPlayer();
         String playerName = player.getName();
         String playerUUID = player.getUniqueId().toString();
@@ -50,16 +50,16 @@ public class PlayerTimeTracker implements Listener {
     }
 
     @EventHandler
-    public void onPlayerKick(PlayerKickEvent event) throws SQLException {
+    public void onPlayerKick(PlayerKickEvent event) throws SQLException, ClassNotFoundException {
         handlePlayerQuit(event.getPlayer());
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) throws SQLException {
+    public void onPlayerQuit(PlayerQuitEvent event) throws SQLException, ClassNotFoundException {
         handlePlayerQuit(event.getPlayer());
     }
 
-    public void handlePlayerQuit(Player player) throws SQLException {
+    public void handlePlayerQuit(Player player) throws SQLException, ClassNotFoundException {
         String playerUUID = player.getUniqueId().toString();
         long quitTime = Instant.now().getEpochSecond();
 

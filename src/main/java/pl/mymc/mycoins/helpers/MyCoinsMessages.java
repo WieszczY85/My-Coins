@@ -44,7 +44,7 @@ public class MyCoinsMessages {
     public void sendDailyLimitMessage(Player player) {
         sendPlayerMessage(player, "dailyLimit");
     }
-    public void sendRemainingDailyLimit(Player player) throws SQLException {
+    public void sendRemainingDailyLimit(Player player) throws SQLException, ClassNotFoundException {
         double remainingReward = dbHandler.getPlayerDailyReward(player.getUniqueId().toString());
         String message = getMessage("remainingDailyLimit").replace("%remainingReward%", String.valueOf(remainingReward));
         Component component = minimessage.deserialize(message);
