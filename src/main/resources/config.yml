@@ -9,9 +9,10 @@ reward:
 
 # Ustawienia niezbędnyhc informacji do łaczenia z bazą danych
 database:
-  # Dostępne opcje: mariadb, mysql, sqlite //TODO: dodać obsługę H2 lub YAML
+  # Dostępne opcje: mariadb, mysql, sqlite, postgresql //TODO: dodać obsługę H2 lub YAML
   type: "sqlite"
-  mysql:
+  # Dane do łączenia się z bazą dla MariaDB/MySQL/PostgreSQL
+  sql:
     host: "localhost"
     port: 3306
     name: "my_database"

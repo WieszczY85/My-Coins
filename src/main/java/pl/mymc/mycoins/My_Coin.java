@@ -8,7 +8,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import pl.mymc.mycoins.databases.DatabaseHandler;
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
+import pl.mymc.mycoins.databases.PostgreSQLDatabaseHandler;
 import pl.mymc.mycoins.databases.SQLiteDatabaseHandler;
 import pl.mymc.mycoins.myc.PlayerTimeTracker;
 import pl.mymc.mycoins.helpers.MyCoinsDependencyManager;
@@ -26,15 +28,14 @@ import java.sql.SQLException;
 public final class My_Coin extends JavaPlugin {
 
     //TODO:
-    // * Debug - przenieść część instniejących logów (zmniejszenie spamu w konsoli)
-    // * Dodać multiplikacje dla rang + weryfikacja rang z Vault
+    // * Dodać obsługę wyboru typu baz danych
     // * Dodać sprawdzanie czy gracz się porusza i jeśli nie to czy ma AFK
     // * Dodać obsługe AFK z EternalsCore i EssentialsX
 
     private final MyCoinsLogger logger;
     private static Economy econ = null;
     private static Permission perms = null;
-    private MySQLDatabaseHandler dbHandler;
+    private DatabaseHandler dbHandler;
     private PlayerTimeTracker timeTracker;
     private final FileConfiguration config;
     private final boolean debugMode;
@@ -85,7 +86,19 @@ public final class My_Coin extends JavaPlugin {
         }
         setupService(Permission.class);
 
-        dbHandler = new MySQLDatabaseHandler(config, logger);
+        switch (dbType) {
+            case "mysql":
+                this.dbHandler = new MySQLDatabaseHandler(config, logger);
+                break;
+            case "sqlite":
+                this.dbHandler = new SQLiteDatabaseHandler(config, logger);
+                break;
+            case "postgresql":
+                this.dbHandler = new PostgreSQLDatabaseHandler(config, logger);
+                break;
+            default:
+                throw new IllegalArgumentException("Nieznany typ bazy danych: " + dbType);
+        }
         try {
             dbHandler.openConnectionAndCreateTable();
         } catch (SQLException | ClassNotFoundException e) {
