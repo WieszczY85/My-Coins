@@ -5,7 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
+import pl.mymc.mycoins.databases.DatabaseHandler;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,13 +21,13 @@ import static org.bukkit.Bukkit.getName;
 import static org.bukkit.Bukkit.getServer;
 
 public class PlayerTimeTracker implements Listener {
-    private final MySQLDatabaseHandler dbHandler;
+    private final DatabaseHandler dbHandler;
     public final FileConfiguration config;
     private final MyCoinsLogger logger;
     private final MyCoinsMessages sm;
     private final RankMultiplier rankMultiplier;
 
-    public PlayerTimeTracker(MySQLDatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config, FileConfiguration localConfig) {
+    public PlayerTimeTracker(DatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config, FileConfiguration localConfig) {
         this.dbHandler = dbHandler;
         this.config = config;
         this.logger = logger;

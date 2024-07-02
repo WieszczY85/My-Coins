@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import org.bukkit.configuration.file.FileConfiguration;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 
-public class MySQLDatabaseHandler {
+public class MySQLDatabaseHandler implements DatabaseHandler {
     private Connection connection;
     private final String host, database, username, password;
     private final int port;
@@ -95,7 +95,7 @@ public class MySQLDatabaseHandler {
         }
     }
 
-    public void openConnectionAndCreateTable() throws SQLException, ClassNotFoundException {
+    public void openConnectionAndCreateTable() {
         try {
             openConnection();
         }catch (SQLException | ClassNotFoundException e) {
@@ -160,26 +160,6 @@ public class MySQLDatabaseHandler {
             logger.debug("Zapisano czas online gracza o UUID " + playerUUID + " do bazy danych. Całkowity czas online: " + totalTime);
         }
     }
-
-    public long getPlayerTotalTime(String playerUUID) throws SQLException {
-        try (PreparedStatement statement = getConnection().prepareStatement("SELECT SUM(totalTime) AS totalTimeSum FROM `My-Coins` WHERE uuid = ?;")) {
-            statement.setString(1, playerUUID);
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    if(debugMode) {
-                        logger.debug("Pobrano całkowity czas online dla gracza o UUID: " + playerUUID + " z bazy danych: " + rs.getLong("totalTimeSum"));
-                    }
-                    return rs.getLong("totalTimeSum");
-                } else {
-                    return 0;
-                }
-            }catch (SQLException e) {
-                logger.err("Nie udało się pobrać całkowitego czasu gry z bazy danych. Szczegóły błędu: " + e.getMessage());
-            }
-        }
-        return 0;
-    }
-
 
     public double getPlayerDailyReward(String playerUUID) throws SQLException {
         try (PreparedStatement statement = getConnection().prepareStatement("SELECT remainingReward FROM `DailyRewards` WHERE uuid = ? AND date = ?;")) {

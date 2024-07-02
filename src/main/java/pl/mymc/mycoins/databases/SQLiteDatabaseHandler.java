@@ -7,7 +7,7 @@ import java.sql.*;
 import java.time.Instant;
 import java.time.LocalDate;
 
-public class SQLiteDatabaseHandler {
+public class SQLiteDatabaseHandler implements DatabaseHandler {
     private Connection connection;
     private final String url;
     private final MyCoinsLogger logger;
