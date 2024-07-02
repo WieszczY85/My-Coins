@@ -9,27 +9,29 @@ public interface DatabaseHandler {
 
     Connection getConnection();
 
+    boolean isConnected();
+
     void createTable();
 
-    int incrementSessionId(String playerUUID) throws SQLException;
+    int incrementSessionId(String playerUUID) throws SQLException, ClassNotFoundException;
 
     void openConnectionAndCreateTable() throws SQLException, ClassNotFoundException;
 
-    void savePlayerJoinTime(String playerName, String playerUUID, Instant joinTime, LocalDate currentDate);
+    void savePlayerJoinTime(String playerName, String playerUUID, Instant joinTime, LocalDate currentDate) throws SQLException, ClassNotFoundException;
 
-    void savePlayerQuitTime(String playerUUID, long quitTime);
+    void savePlayerQuitTime(String playerUUID, long quitTime) throws SQLException, ClassNotFoundException;
 
-    double getPlayerDailyReward(String playerUUID) throws SQLException;
+    double getPlayerDailyReward(String playerUUID) throws SQLException, ClassNotFoundException;
 
-    void addNewDailyRewardEntry(String playerUUID, double dailyLimit);
+    void addNewDailyRewardEntry(String playerUUID, double dailyLimit) throws SQLException, ClassNotFoundException;
 
-    void updateRemainingReward(String playerUUID, double reward);
+    void updateRemainingReward(String playerUUID, double reward) throws SQLException, ClassNotFoundException;
 
-    long getSessionTime(String playerUUID, long quitTime) throws SQLException;
+    long getSessionTime(String playerUUID, long quitTime) throws SQLException, ClassNotFoundException;
 
     void handleDailyReward(String playerUUID, double dailyLimit);
 
-    boolean checkIfEntryExists(String playerUUID) throws SQLException;
+    boolean checkIfEntryExists(String playerUUID) throws SQLException, ClassNotFoundException;
 
     void closeConnection();
 }

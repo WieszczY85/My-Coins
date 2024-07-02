@@ -30,6 +30,16 @@ public class SQLiteDatabaseHandler implements DatabaseHandler {
     public Connection getConnection() {
         return connection;
     }
+
+    public boolean isConnected() {
+        try {
+            return (connection != null && !connection.isClosed());
+        } catch (SQLException e) {
+            logger.err("Nie udało się ponownie połączyć z bazą danych!" + e.getMessage());
+            return false;
+        }
+    }
+
     public void createTable() {
         String createTable = "CREATE TABLE IF NOT EXISTS My-Coins (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +

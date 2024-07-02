@@ -49,6 +49,15 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
         return connection;
     }
 
+    public boolean isConnected() {
+        try {
+            return (connection != null && !connection.isClosed());
+        } catch (SQLException e) {
+            logger.err("Nie udało się ponownie połączyć z bazą danych!" + e.getMessage());
+            return false;
+        }
+    }
+
     public void createTable() {
         try (Statement statement = getConnection().createStatement()) {
             if(debugMode) {
