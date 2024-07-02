@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import org.bukkit.configuration.file.FileConfiguration;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 
-
 public class PostgreSQLDatabaseHandler implements DatabaseHandler {
     private final boolean debugMode;
     private final MyCoinsLogger logger;
@@ -21,7 +20,6 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
     private final String username;
     private final String password;
     private Connection connection;
-    // inne zmienne specyficzne dla PostgreSQL
 
     public PostgreSQLDatabaseHandler(FileConfiguration config, MyCoinsLogger logger) {
         this.host = config.getString("database.sql.host");
