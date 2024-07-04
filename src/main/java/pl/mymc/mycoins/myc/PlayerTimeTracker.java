@@ -65,6 +65,7 @@ public class PlayerTimeTracker implements Listener {
         } catch (SQLException | ClassNotFoundException e) {
             logger.err("Nie udało się obsłużyć nagrody dziennych. Szczegóły błędu: " + e.getMessage());
         }
+        handledPlayers.remove(player.getUniqueId());
         sm.sendRemainingDailyLimit(player);
     }
 

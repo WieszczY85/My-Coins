@@ -28,7 +28,6 @@ import java.sql.SQLException;
 public final class My_Coin extends JavaPlugin {
 
     //TODO:
-    // * Dodać obsługę wyboru typu baz danych
     // * Dodać sprawdzanie czy gracz się porusza i jeśli nie to czy ma AFK
     // * Dodać obsługe AFK z EternalsCore i EssentialsX
 
