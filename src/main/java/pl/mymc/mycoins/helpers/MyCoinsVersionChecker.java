@@ -50,7 +50,6 @@ public class MyCoinsVersionChecker {
                     logger.success("Pobrano i zainstalowano najnowszą wersję, która zostanie użyta po następnym restarcie serwera.");
                 } catch (IOException e) {
                     logger.err("Nie udało się pobrać nowej wersji: " + e.getMessage());
-                    //newJar.delete();
                 }
             }else{
                 logger.warning("Możesz pobrać najnowszą wersję z: " + release.getPageUrl());
