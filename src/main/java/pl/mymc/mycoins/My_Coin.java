@@ -91,6 +91,7 @@ public final class My_Coin extends JavaPlugin {
 
         switch (dbType) {
             case "mysql":
+            case "mariadb":
                 this.dbHandler = new MySQLDatabaseHandler(config, logger);
                 break;
             case "sqlite":
@@ -108,7 +109,7 @@ public final class My_Coin extends JavaPlugin {
             throw new RuntimeException(e);
         }
 
-        timeTracker = new PlayerTimeTracker(dbHandler, logger, config, localConfig);
+        timeTracker = new PlayerTimeTracker(dbHandler, logger, config, debugMode, localConfig);
         getServer().getPluginManager().registerEvents(timeTracker, this);
         MyCoinsVersionChecker.checkVersion(pluginName, currentVersion, logger, checkForUpdates, autoDownloadUpdates);
         logger.pluginStart();
