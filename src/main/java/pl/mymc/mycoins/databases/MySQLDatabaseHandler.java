@@ -13,15 +13,19 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     private final int port;
     private final MyCoinsLogger logger;
     private final boolean debugMode;
+    private final FileConfiguration config;
 
     public MySQLDatabaseHandler(FileConfiguration config, MyCoinsLogger logger) {
-        this.debugMode = config.getBoolean("debug");
-        this.host = config.getString("database.mysql.host");
-        this.port = config.getInt("database.mysql.port");
-        this.database = config.getString("database.mysql.name");
-        this.username = config.getString("database.mysql.username");
-        this.password = config.getString("database.mysql.password");
+        this.config = config;
+        this.debugMode = this.config.getBoolean("debug");
+        this.host = this.config.getString("database.mysql.host");
+        this.port = this.config.getInt("database.mysql.port");
+        this.database = this.config.getString("database.mysql.name");
+        this.username = this.config.getString("database.mysql.username");
+        this.password = this.config.getString("database.mysql.password");
         this.logger = logger;
+
+
 
     }
 
@@ -40,10 +44,10 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     }
     public boolean isConnected() {
         try {
-            return (connection != null && !connection.isClosed());
+            return (connection == null || connection.isClosed());
         } catch (SQLException e) {
             logger.err("Nie udało się ponownie połączyć z bazą danych!" + e.getMessage());
-            return false;
+            return true;
         }
     }
 
@@ -102,7 +106,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     }
 
     public int incrementSessionId(String playerUUID) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
         try (PreparedStatement statement = getConnection().prepareStatement("SELECT MAX(sessionId) AS maxSessionId FROM `My-Coins` WHERE uuid = ?;")) {
@@ -117,7 +121,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
         }
     }
     public void savePlayerJoinTime(String playerName, String playerUUID, Instant joinTime, LocalDate currentDate) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
         try (PreparedStatement statement = getConnection().prepareStatement("INSERT INTO `My-Coins` (player, uuid, sessionId, data, joinTime) VALUES (?, ?, ?, ?, ?);")) {
@@ -137,7 +141,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     }
 
     public void savePlayerQuitTime(String playerUUID, long quitTime) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
         try (PreparedStatement statement = getConnection().prepareStatement("UPDATE `My-Coins` SET quitTime = ? WHERE uuid = ? AND sessionId = (SELECT MAX(sessionId) FROM `My-Coins` WHERE uuid = ?) AND quitTime IS NULL;")) {
@@ -174,12 +178,12 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
         }
 
         if(debugMode) {
-            logger.debug("Zapisano czas online gracza o UUID " + playerUUID + " do bazy danych. Całkowity czas online: " + totalTime);
+            logger.debug("Zapisano czas online gracza o UUID: " + playerUUID + " do bazy danych. Całkowity czas online: " + totalTime);
         }
     }
 
     public double getPlayerDailyReward(String playerUUID) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
         try (PreparedStatement statement = getConnection().prepareStatement("SELECT remainingReward FROM `DailyRewards` WHERE uuid = ? AND date = ?;")) {
@@ -188,7 +192,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {
                     if(debugMode) {
-                        logger.debug("Pobrano pozostąłą ilość dostępnej nagrody dla gracza o UUID: " + playerUUID + " z bazy danych: " + rs.getDouble("remainingReward"));
+                        logger.debug("Pobrano ilość dostępnej nagrody dla gracza o UUID: " + playerUUID + " z datą: " +java.sql.Date.valueOf(LocalDate.now().toString()) + ": " + rs.getDouble("remainingReward"));
                     }
                     return rs.getDouble("remainingReward");
                 } else {
@@ -202,7 +206,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     }
 
     public void addNewDailyRewardEntry(String playerUUID, double dailyLimit) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
         try (PreparedStatement statement = getConnection().prepareStatement("INSERT INTO `DailyRewards` (uuid, date, remainingReward) VALUES (?, ?, ?);")) {
@@ -212,7 +216,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
             statement.executeUpdate();
             if(debugMode) {
                 logger.debug("Dodano wpis do DailyRewards dla gracza o UUID: " + playerUUID + ", z data: " + java.sql.Date.valueOf(LocalDate.now().toString()));
-                logger.debug("Ustawiono wartość remainingReward na: " + dailyLimit);
+                logger.debug("Ustawiono nową wartość remainingReward na: " + dailyLimit);
             }
         } catch (SQLException e) {
             logger.err("Nie udało się dodać nowego wpisu do tabeli DailyRewards. Szczegóły błędu: " + e.getMessage());
@@ -221,9 +225,10 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
 
 
     public void updateRemainingReward(String playerUUID, double reward) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
+        //double reward = getPlayerDailyReward(playerUUID);
         try (PreparedStatement statement = getConnection().prepareStatement("UPDATE `DailyRewards` SET remainingReward = remainingReward - ? WHERE uuid = ? AND date = ?;")) {
             statement.setDouble(1, reward);
             statement.setString(2, playerUUID);
@@ -231,7 +236,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
             statement.executeUpdate();
             if(debugMode) {
                 logger.debug("Zaktualizowano wpis do DailyRewards dla gracza o UUID: " + playerUUID + ", z data: " + java.sql.Date.valueOf(LocalDate.now().toString()));
-                logger.debug("Ustawiono wartość remainingReward na: " + reward);
+                logger.debug("Ustawiono zaktualizowaną wartość remainingReward na: " + reward);
             }
         } catch (SQLException e) {
             logger.err("Nie udało się zaktualizować pozostałej nagrody w bazie danych. Szczegóły błędu: " + e.getMessage());
@@ -239,7 +244,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     }
 
     public long getSessionTime(String playerUUID, long quitTime) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
         }
         try (PreparedStatement statement = getConnection().prepareStatement("SELECT totalTime FROM `My-Coins` WHERE uuid = ? AND quitTime = ?;")) {
@@ -255,12 +260,13 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
         }
     }
 
-    public void handleDailyReward(String playerUUID, double dailyLimit) {
+    public void handleDailyReward(String playerUUID, double dailyLimit, double reward) {
         try {
             if (checkIfEntryExists(playerUUID)) {
-                updateRemainingReward(playerUUID, dailyLimit);
+                updateRemainingReward(playerUUID, reward);
             } else {
-                addNewDailyRewardEntry(playerUUID, dailyLimit);
+                double limit = config.getDouble("reward.daily_limit");
+                addNewDailyRewardEntry(playerUUID, limit);
             }
         } catch (SQLException | ClassNotFoundException e) {
             logger.err("Nie udało się obsłużyć nagrody dziennych. Szczegóły błędu: " + e.getMessage());
@@ -268,14 +274,24 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
     }
 
     public boolean checkIfEntryExists(String playerUUID) throws SQLException, ClassNotFoundException {
-        if (!isConnected()) {
+        if (isConnected()) {
             openConnection();
+        }
+        if(debugMode) {
+            logger.debug("Sprawdzanie czy istnieje wpis dla DailyRewards dla UUID: " + playerUUID + " i daty: " + java.sql.Date.valueOf(LocalDate.now().toString()));
         }
         try (PreparedStatement statement = getConnection().prepareStatement("SELECT 1 FROM `DailyRewards` WHERE uuid = ? AND date = ?;")) {
             statement.setString(1, playerUUID);
             statement.setDate(2, java.sql.Date.valueOf(LocalDate.now().toString()));
             try (ResultSet rs = statement.executeQuery()) {
-                return rs.next();
+                boolean entryExists = rs.next();
+                if(debugMode) {
+                    logger.debug("Odpowiedź bazy: " + entryExists);
+                }
+                return entryExists;
+            }catch (SQLException e) {
+                logger.err("Nie udało się sprawdzić wpisu DailyRewards! Szczegóły błędu: " + e.getMessage());
+                return false;
             }
         }
     }

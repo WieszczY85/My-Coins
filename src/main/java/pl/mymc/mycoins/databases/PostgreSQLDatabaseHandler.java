@@ -51,10 +51,10 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
 
     public boolean isConnected() {
         try {
-            return (connection != null && !connection.isClosed());
+            return (connection == null || connection.isClosed());
         } catch (SQLException e) {
             logger.err("Nie udało się ponownie połączyć z bazą danych!" + e.getMessage());
-            return false;
+            return true;
         }
     }
 
@@ -211,7 +211,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
     }
 
 
-    public void updateRemainingReward(String playerUUID, double reward) {
+    public void updateRemainingReward(String playerUUID, double reward) throws SQLException {
+
         try (PreparedStatement statement = getConnection().prepareStatement("UPDATE \"DailyRewards\" SET remainingReward = remainingReward - ? WHERE uuid = ? AND date = ?;")) {
             statement.setDouble(1, reward);
             statement.setString(2, playerUUID);
@@ -240,10 +241,10 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
         }
     }
 
-    public void handleDailyReward(String playerUUID, double dailyLimit) {
+    public void handleDailyReward(String playerUUID, double dailyLimit, double reward) {
         try {
             if (checkIfEntryExists(playerUUID)) {
-                updateRemainingReward(playerUUID, dailyLimit);
+                updateRemainingReward(playerUUID, reward);
             } else {
                 addNewDailyRewardEntry(playerUUID, dailyLimit);
             }

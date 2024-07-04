@@ -29,7 +29,7 @@ public interface DatabaseHandler {
 
     long getSessionTime(String playerUUID, long quitTime) throws SQLException, ClassNotFoundException;
 
-    void handleDailyReward(String playerUUID, double dailyLimit);
+    void handleDailyReward(String playerUUID, double dailyLimit, double reward);
 
     boolean checkIfEntryExists(String playerUUID) throws SQLException, ClassNotFoundException;
 
