@@ -21,11 +21,16 @@ public class RankMultiplier {
     }
 
     public double getMultiplier(Player player) {
+        double highestMultiplier = 1.0;
         for (String rank : rankMultipliers.keySet()) {
             if (player.hasPermission("mycoins.rank." + rank)) {
-                return rankMultipliers.get(rank);
+                double rankMultiplier = rankMultipliers.get(rank);
+                if (rankMultiplier > highestMultiplier) {
+                    highestMultiplier = rankMultiplier;
+                }
             }
         }
-        return 1.0;
+        return highestMultiplier;
     }
+
 }
