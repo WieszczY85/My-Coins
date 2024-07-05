@@ -12,7 +12,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 
 public class PostgreSQLDatabaseHandler implements DatabaseHandler {
-    private final boolean debugMode;
     private final MyCoinsLogger logger;
     private final String host;
     private final int port;
@@ -27,7 +26,6 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
         this.database = config.getString("database.sql.name");
         this.username = config.getString("database.sql.username");
         this.password = config.getString("database.sql.password");
-        this.debugMode = config.getBoolean("debug");
         this.logger = logger;
     }
 
@@ -60,9 +58,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
 
     public void createTable() {
         try (Statement statement = getConnection().createStatement()) {
-            if(debugMode) {
-                logger.debug("Sprawdzanie tabeli My-Coins w bazie danych");
-            }
+            logger.debug("Sprawdzanie tabeli My-Coins w bazie danych");
+
             String createTable = "CREATE TABLE IF NOT EXISTS \"My-Coins\" (" +
                     "\"id\" SERIAL PRIMARY KEY," +
                     "\"player\" varchar(255) NOT NULL," +
@@ -75,12 +72,10 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
                     ");";
 
             statement.execute(createTable);
-            if(debugMode) {
-                logger.debug("Zakończono operacje na tabeli My-Coins");
-            }
-            if(debugMode) {
-                logger.debug("Sprawdzanie tabeli DailyRewards w bazie danych");
-            }
+            logger.debug("Zakończono operacje na tabeli My-Coins");
+
+            logger.debug("Sprawdzanie tabeli DailyRewards w bazie danych");
+
             String createDailyRewardsTable = "CREATE TABLE IF NOT EXISTS \"DailyRewards\" (" +
                     "\"uuid\" varchar(255) NOT NULL," +
                     "\"date\" date NOT NULL DEFAULT CURRENT_DATE," +
@@ -89,9 +84,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
                     ");";
 
             statement.execute(createDailyRewardsTable);
-            if(debugMode) {
-                logger.debug("Zakończono operacje na tabeli DailyRewards");
-            }
+            logger.debug("Zakończono operacje na tabeli DailyRewards");
+
         }catch (SQLException e) {
             logger.err("Nie udało się wykonać operacji na bazie danych!" + e.getMessage());
         }
@@ -129,9 +123,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
             statement.setDate(4, java.sql.Date.valueOf(currentDate.toString()));
             statement.setLong(5, joinTime.getEpochSecond());
             statement.executeUpdate();
-            if(debugMode) {
-                logger.debug("Zapisano czas wejścia gracza " + playerName + " (" + playerUUID + ") do bazy danych. Czas wejścia: " + joinTime + ", Data: " + currentDate);
-            }
+            logger.debug("Zapisano czas wejścia gracza " + playerName + " (" + playerUUID + ") do bazy danych. Czas wejścia: " + joinTime + ", Data: " + currentDate);
+
         } catch (SQLException e) {
             logger.err("Nie udało się zapisać czasu wejścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
         }
@@ -143,9 +136,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
             statement.setString(2, playerUUID);
             statement.setString(3, playerUUID);
             statement.executeUpdate();
-            if(debugMode) {
-                logger.debug("Zapisano czas wyjścia gracza o UUID: " + playerUUID + " do bazy danych. Czas wyjścia: " + quitTime);
-            }
+            logger.debug("Zapisano czas wyjścia gracza o UUID: " + playerUUID + " do bazy danych. Czas wyjścia: " + quitTime);
+
         }catch (SQLException e) {
             logger.err("Nie udało się zapisać czasu wyjścia gracza do bazy danych. Szczegóły błędu: " + e.getMessage());
         }
@@ -171,9 +163,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
             logger.err("Nie udało się pobrać czasu online z bazy danych. Szczegóły błędu: " + e.getMessage());
         }
 
-        if(debugMode) {
-            logger.debug("Zapisano czas online gracza o UUID " + playerUUID + " do bazy danych. Całkowity czas online: " + totalTime);
-        }
+        logger.debug("Zapisano czas online gracza o UUID " + playerUUID + " do bazy danych. Całkowity czas online: " + totalTime);
+
     }
     public double getPlayerDailyReward(String playerUUID) throws SQLException {
         try (PreparedStatement statement = getConnection().prepareStatement("SELECT remainingReward FROM \"DailyRewards\" WHERE uuid = ? AND date = ?;")) {
@@ -181,9 +172,8 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
             statement.setDate(2, java.sql.Date.valueOf(LocalDate.now().toString()));
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {
-                    if(debugMode) {
-                        logger.debug("Pobrano pozostąłą ilość dostępnej nagrody dla gracza o UUID: " + playerUUID + " z bazy danych: " + rs.getDouble("remainingReward"));
-                    }
+                    logger.debug("Pobrano pozostąłą ilość dostępnej nagrody dla gracza o UUID: " + playerUUID + " z bazy danych: " + rs.getDouble("remainingReward"));
+
                     return rs.getDouble("remainingReward");
                 } else {
                     return 0;
@@ -201,10 +191,9 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
             statement.setDate(2, java.sql.Date.valueOf(LocalDate.now().toString()));
             statement.setDouble(3, dailyLimit);
             statement.executeUpdate();
-            if(debugMode) {
-                logger.debug("Dodano wpis do DailyRewards dla gracza o UUID: " + playerUUID + ", z data: " + java.sql.Date.valueOf(LocalDate.now().toString()));
-                logger.debug("Ustawiono wartość remainingReward na: " + dailyLimit);
-            }
+            logger.debug("Dodano wpis do DailyRewards dla gracza o UUID: " + playerUUID + ", z data: " + java.sql.Date.valueOf(LocalDate.now().toString()));
+            logger.debug("Ustawiono wartość remainingReward na: " + dailyLimit);
+
         } catch (SQLException e) {
             logger.err("Nie udało się dodać nowego wpisu do tabeli DailyRewards. Szczegóły błędu: " + e.getMessage());
         }
@@ -218,10 +207,9 @@ public class PostgreSQLDatabaseHandler implements DatabaseHandler {
             statement.setString(2, playerUUID);
             statement.setDate(3, java.sql.Date.valueOf(LocalDate.now().toString()));
             statement.executeUpdate();
-            if(debugMode) {
-                logger.debug("Zaktualizowano wpis do DailyRewards dla gracza o UUID: " + playerUUID + ", z data: " + java.sql.Date.valueOf(LocalDate.now().toString()));
-                logger.debug("Ustawiono wartość remainingReward na: " + reward);
-            }
+            logger.debug("Zaktualizowano wpis do DailyRewards dla gracza o UUID: " + playerUUID + ", z data: " + java.sql.Date.valueOf(LocalDate.now().toString()));
+            logger.debug("Ustawiono wartość remainingReward na: " + reward);
+
         } catch (SQLException e) {
             logger.err("Nie udało się zaktualizować pozostałej nagrody w bazie danych. Szczegóły błędu: " + e.getMessage());
         }
