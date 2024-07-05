@@ -169,7 +169,7 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
             logger.err("Nie udało się pobrać czasu online z bazy danych. Szczegóły błędu: " + e.getMessage());
         }
 
-        logger.debug("Zapisano czas online gracza o UUID: " + playerUUID + " do bazy danych. Całkowity czas online: " + totalTime);
+        logger.debug("Zapisano czas online gracza o UUID: " + playerUUID + " do bazy danych. Czas tej sesji online: " + totalTime);
 
     }
 
@@ -272,8 +272,11 @@ public class MySQLDatabaseHandler implements DatabaseHandler {
             statement.setDate(2, java.sql.Date.valueOf(LocalDate.now().toString()));
             try (ResultSet rs = statement.executeQuery()) {
                 boolean entryExists = rs.next();
-                logger.debug("Odpowiedź bazy: " + entryExists);
-
+                if(entryExists){
+                    logger.debug("Odpowiedź bazy: istnieje wpisz w DailyRewards");
+                }else{
+                    logger.debug("Odpowiedź bazy: nie istnieje wpisz w DailyRewards");
+                }
                 return entryExists;
             }catch (SQLException e) {
                 logger.err("Nie udało się sprawdzić wpisu DailyRewards! Szczegóły błędu: " + e.getMessage());
