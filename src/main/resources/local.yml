@@ -1,5 +1,6 @@
-# Version local.yml 1.0
+# Version 1.0 local.yml
 
 prefix: "<gradient:#ffaa00:#ffff55:#55ff55:#00aa00>[<b>My-Coins</b>]</gradient> "
 dailyLimit: "Osiągnąłeś dzienny limit nagród. Wróć jutro po więcej!"
 remainingDailyLimit: "<green>Dzisiaj możesz jeszcze zdobyć <b>%remainingReward%</b> punktów nagrody</green>"
+noDailyLimit: "<red>Niestety przekroczyłeś już <b>dzienny limit</b> punktów nagrody!</red> <reset>Na szczęście jutro też jest dzień 😉"

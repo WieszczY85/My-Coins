@@ -40,7 +40,7 @@ public class PlayerTimeTracker implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException, ClassNotFoundException { //
+    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException, ClassNotFoundException {
         Player player = event.getPlayer();
         String playerName = player.getName();
         String playerUUID = player.getUniqueId().toString();
@@ -55,14 +55,22 @@ public class PlayerTimeTracker implements Listener {
                 logger.debug("Utworzono brakujący wpis DailyReward");
 
             } else {
-                logger.debug("Wpis DailyReward istnieje");
+                logger.debug("Wpis DailyReward istnieje, nie ma potrzeby go tworzyć");
             }
         } catch (SQLException | ClassNotFoundException e) {
             logger.err("Nie udało się obsłużyć nagrody dziennych. Szczegóły błędu: " + e.getMessage());
         }
         handledPlayers.remove(player.getUniqueId());
-        sm.sendRemainingDailyLimit(player);
+
+        double remainingReward = dbHandler.getPlayerDailyReward(playerUUID);
+        if (remainingReward <= 0) {
+            sm.sendPlayerMessage(player, "noDailyLimit");
+        } else {
+            sm.sendRemainingDailyLimit(player);
+        }
     }
+
+
     @EventHandler
     public void onPlayerKick(PlayerKickEvent event) throws SQLException, ClassNotFoundException {
         Player player = event.getPlayer();
@@ -96,34 +104,19 @@ public class PlayerTimeTracker implements Listener {
         dbHandler.savePlayerQuitTime(playerUUID, quitTime);
 
         long sessionTimeInSeconds = dbHandler.getSessionTime(playerUUID, quitTime);
-        logger.debug("Surowe sessionTimeInSeconds: " + sessionTimeInSeconds);
-
-        double sessionTimeInMinutes = sessionTimeInSeconds / 5.0;
-        logger.debug("Surowe sessionTimeInMinutes: " + sessionTimeInMinutes);
-
+        double sessionTimeInMinutes = sessionTimeInSeconds / 60.0;
         double rate = config.getDouble("reward.points_rate");
-        logger.debug("Pobrana wartość points_rate: " + rate);
-
         double reward = sessionTimeInMinutes * rate;
-        logger.debug("Obliczona nagroda z sessionTimeInMinutes * rate = " + reward);
-
         double multiplier = rankMultiplier.getMultiplier(player);
-        logger.debug("Pobrano rankMultiplier: " + multiplier);
+        double remainingReward = dbHandler.getPlayerDailyReward(playerUUID);
 
         reward *= multiplier;
-        logger.debug("Doliczanie rankMultiplier teraz reward = " + reward);
-
-        double remainingReward = dbHandler.getPlayerDailyReward(playerUUID);
-        logger.debug("Pobrana wartość remainingReward: " + remainingReward);
-        logger.debug("Sprawdzanie czy przekroczono.");
 
         if (reward > remainingReward) {
             reward = remainingReward;
         }
 
         if (reward > 0 && remainingReward > 0) {
-            logger.debug("Przekazuje argumenty do handleDailyReward! UUID: [" + playerUUID + "], remainingReward: [" + remainingReward + "], reward: [" + reward + "]");
-
             dbHandler.handleDailyReward(playerUUID, remainingReward, reward);
             depositPlayerReward(player, reward);
         } else {
@@ -131,18 +124,13 @@ public class PlayerTimeTracker implements Listener {
         }
     }
 
-
-
     private void depositPlayerReward(Player player, double reward) {
 
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
             return;
         }
-        logger.debug("Tworze zaokrąglenie do pełnej liczby z reward = " + reward);
-
         double roundedReward = Math.round(reward * 100.0) / 100.0;
-        logger.debug("reward po zaokrągleniu wynosi  = " + roundedReward);
 
         Economy econ = rsp.getProvider();
         econ.depositPlayer(player, roundedReward);
