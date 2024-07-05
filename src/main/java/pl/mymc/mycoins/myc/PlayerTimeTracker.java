@@ -107,21 +107,21 @@ public class PlayerTimeTracker implements Listener {
         double reward = sessionTimeInMinutes * rate;
         logger.debug("Obliczona nagroda z sessionTimeInMinutes * rate = " + reward);
 
+        double multiplier = rankMultiplier.getMultiplier(player);
+        logger.debug("Pobrano rankMultiplier: " + multiplier);
+
+        reward *= multiplier;
+        logger.debug("Doliczanie rankMultiplier teraz reward = " + reward);
+
         double remainingReward = dbHandler.getPlayerDailyReward(playerUUID);
         logger.debug("Pobrana wartość remainingReward: " + remainingReward);
         logger.debug("Sprawdzanie czy przekroczono.");
 
         if (reward > remainingReward) {
             reward = remainingReward;
-            logger.debug("Obecna nagroda przekracza remainingReward dlatego teraz reward przyjmuje wartość: " + remainingReward);
         }
 
         if (reward > 0 && remainingReward > 0) {
-            double multiplier = rankMultiplier.getMultiplier(player);
-            logger.debug("Pobrano rankMultiplier: " + multiplier);
-
-            reward *= multiplier;
-            logger.debug("Doliczanie rankMultiplier teraz reward = " + reward);
             logger.debug("Przekazuje argumenty do handleDailyReward! UUID: [" + playerUUID + "], remainingReward: [" + remainingReward + "], reward: [" + reward + "]");
 
             dbHandler.handleDailyReward(playerUUID, remainingReward, reward);
@@ -130,6 +130,7 @@ public class PlayerTimeTracker implements Listener {
             logger.debug("Gracz " + player.getName() + " przekroczył dzienny limit nagród.");
         }
     }
+
 
 
     private void depositPlayerReward(Player player, double reward) {
