@@ -2,6 +2,7 @@
 reward:
   daily_limit: 1000
   points_rate: 1.0
+  # Usaw dodatkowy mnożnik dla danej rangi dodając uprawnienie mycoins.rank.nazwa i ustawiajac poniżej odpowiednie rangi
   multipliers:
     gracz: 1.05
     vip: 1.15
