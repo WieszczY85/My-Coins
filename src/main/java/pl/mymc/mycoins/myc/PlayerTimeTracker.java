@@ -27,7 +27,6 @@ public class PlayerTimeTracker implements Listener {
     private final DatabaseHandler dbHandler;
     public final FileConfiguration config;
     private final MyCoinsLogger logger;
-    private final boolean debugMode;
     private final MyCoinsMessages sm;
     private final RankMultiplier rankMultiplier;
     private final Map<UUID, Boolean> handledPlayers = new HashMap<>();
@@ -36,13 +35,12 @@ public class PlayerTimeTracker implements Listener {
         this.dbHandler = dbHandler;
         this.config = config;
         this.logger = logger;
-        this.debugMode = config.getBoolean("debug");
         this.sm = new MyCoinsMessages(getName(), debugMode, localConfig, dbHandler);
         this.rankMultiplier = new RankMultiplier(config);
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException, ClassNotFoundException {
+    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException, ClassNotFoundException { //
         Player player = event.getPlayer();
         String playerName = player.getName();
         String playerUUID = player.getUniqueId().toString();
@@ -54,13 +52,10 @@ public class PlayerTimeTracker implements Listener {
             if (!dbHandler.checkIfEntryExists(playerUUID)) {
                 double limit = config.getDouble("reward.daily_limit");
                 dbHandler.addNewDailyRewardEntry(playerUUID, limit);
-                if(debugMode) {
-                    logger.debug("Utworzono brakujący wpis DailyReward");
-                }
+                logger.debug("Utworzono brakujący wpis DailyReward");
+
             } else {
-                if(debugMode) {
-                    logger.debug("Wpis DailyReward istnieje");
-                }
+                logger.debug("Wpis DailyReward istnieje");
             }
         } catch (SQLException | ClassNotFoundException e) {
             logger.err("Nie udało się obsłużyć nagrody dziennych. Szczegóły błędu: " + e.getMessage());
@@ -68,7 +63,6 @@ public class PlayerTimeTracker implements Listener {
         handledPlayers.remove(player.getUniqueId());
         sm.sendRemainingDailyLimit(player);
     }
-
     @EventHandler
     public void onPlayerKick(PlayerKickEvent event) throws SQLException, ClassNotFoundException {
         Player player = event.getPlayer();
@@ -102,50 +96,55 @@ public class PlayerTimeTracker implements Listener {
         dbHandler.savePlayerQuitTime(playerUUID, quitTime);
 
         long sessionTimeInSeconds = dbHandler.getSessionTime(playerUUID, quitTime);
-        if(debugMode) {
-            logger.debug("Surowe sessionTimeInSeconds: " + sessionTimeInSeconds);
-        }
-        long sessionTimeInMinutes = sessionTimeInSeconds / 60;
-        if(debugMode) {
-            logger.debug("Surowe sessionTimeInMinutes: " + sessionTimeInMinutes);
-        }
+        logger.debug("Surowe sessionTimeInSeconds: " + sessionTimeInSeconds);
+
+        double sessionTimeInMinutes = sessionTimeInSeconds / 5.0;
+        logger.debug("Surowe sessionTimeInMinutes: " + sessionTimeInMinutes);
+
         double rate = config.getDouble("reward.points_rate");
-        if(debugMode) {
-            logger.debug("Pobrana wartość points_rate: " + rate);
-        }
+        logger.debug("Pobrana wartość points_rate: " + rate);
+
         double reward = sessionTimeInMinutes * rate;
-        if(debugMode) {
-            logger.debug("Obliczona nagroda z sessionTimeInMinutes * rate = " + reward);
-        }
+        logger.debug("Obliczona nagroda z sessionTimeInMinutes * rate = " + reward);
+
         double remainingReward = dbHandler.getPlayerDailyReward(playerUUID);
-        if(debugMode) {
-            logger.debug("Pobrana wartość remainingReward: " + remainingReward);
-            logger.debug("Sprawdzanie czy przekroczono.");
+        logger.debug("Pobrana wartość remainingReward: " + remainingReward);
+        logger.debug("Sprawdzanie czy przekroczono.");
+
+        if (reward > remainingReward) {
+            reward = remainingReward;
+            logger.debug("Obecna nagroda przekracza remainingReward dlatego teraz reward przyjmuje wartość: " + remainingReward);
         }
-        if (remainingReward + reward > config.getDouble("reward.daily_limit")) {
-            reward = Math.max(0, config.getDouble("reward.daily_limit") - remainingReward);
-            sm.sendDailyLimitMessage(player);
+
+        if (reward > 0 && remainingReward > 0) {
+            double multiplier = rankMultiplier.getMultiplier(player);
+            logger.debug("Pobrano rankMultiplier: " + multiplier);
+
+            reward *= multiplier;
+            logger.debug("Doliczanie rankMultiplier teraz reward = " + reward);
+            logger.debug("Przekazuje argumenty do handleDailyReward! UUID: [" + playerUUID + "], remainingReward: [" + remainingReward + "], reward: [" + reward + "]");
+
+            dbHandler.handleDailyReward(playerUUID, remainingReward, reward);
+            depositPlayerReward(player, reward);
+        } else {
+            logger.debug("Gracz " + player.getName() + " przekroczył dzienny limit nagród.");
         }
-
-        reward *= rankMultiplier.getMultiplier(player);
-
-        dbHandler.handleDailyReward(playerUUID, remainingReward, reward);
-
-        depositPlayerReward(player, reward);
     }
 
+
     private void depositPlayerReward(Player player, double reward) {
-        boolean debugMode  = config.getBoolean("debug");
+
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
             return;
         }
+        logger.debug("Tworze zaokrąglenie do pełnej liczby z reward = " + reward);
+
         double roundedReward = Math.round(reward * 100.0) / 100.0;
+        logger.debug("reward po zaokrągleniu wynosi  = " + roundedReward);
+
         Economy econ = rsp.getProvider();
         econ.depositPlayer(player, roundedReward);
-        if(debugMode)
-        {
-            logger.success("Przekazano nagrodę " + roundedReward + " dla gracza " + player.getName());
-        }
+        logger.success("Przekazano nagrodę " + roundedReward + " dla gracza " + player.getName());
     }
 }
