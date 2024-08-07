@@ -4,16 +4,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
+
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import org.bstats.bukkit.Metrics;
+
+import org.bukkit.plugin.java.JavaPlugin;
 import pl.mymc.mycoins.databases.DatabaseHandler;
 import pl.mymc.mycoins.databases.MySQLDatabaseHandler;
 import pl.mymc.mycoins.databases.PostgreSQLDatabaseHandler;
 import pl.mymc.mycoins.databases.SQLiteDatabaseHandler;
 import pl.mymc.mycoins.myc.PlayerTimeTracker;
-import pl.mymc.mycoins.helpers.MyCoinsDependencyManager;
 import pl.mymc.mycoins.helpers.MyCoinsLogger;
 import pl.mymc.mycoins.helpers.MyCoinsVersionChecker;
 
@@ -40,14 +42,15 @@ public final class My_Coin extends JavaPlugin {
     private final boolean debugMode;
     private final boolean checkForUpdates;
     private final boolean autoDownloadUpdates;
-    private FileConfiguration localConfig;
+    private final FileConfiguration localConfig;
     private final String dbType;
     public final String fullName;
     public final String pluginName;
     public final String serverVersion;
     public final String currentVersion;
 
-    public My_Coin() {
+    public My_Coin(FileConfiguration localConfig) {
+        this.localConfig = localConfig;
         this.fullName = getDescription().getFullName();
         this.pluginName = getDescription().getRawName();
         this.serverVersion = getServer().getBukkitVersion();
@@ -58,19 +61,13 @@ public final class My_Coin extends JavaPlugin {
         this.autoDownloadUpdates = config.getBoolean("autoDownloadUpdates");
         this.logger = new MyCoinsLogger(fullName, serverVersion, pluginName, debugMode);
         this.dbType = config.getString("database.type");
-
     }
 
     @Override
     public void onLoad() {
         saveDefaultConfig();
-        createLocalConfig();
-        MyCoinsDependencyManager dm = new MyCoinsDependencyManager(logger);
+        createMessageConfig();
         try {
-            dm.loadMariaDb();
-            dm.loadAdventureApi();
-            dm.loadLegacy();
-            dm.loadMiniMessage();
             if (debugMode) {
                 logger.success("Zakończono ładowanie wszystkie zależności!");
             }
@@ -108,24 +105,26 @@ public final class My_Coin extends JavaPlugin {
             throw new RuntimeException(e);
         }
 
-        timeTracker = new PlayerTimeTracker(dbHandler, logger, config, debugMode, localConfig);
+        timeTracker = new PlayerTimeTracker(dbHandler, logger, config, localConfig);
         getServer().getPluginManager().registerEvents(timeTracker, this);
         MyCoinsVersionChecker.checkVersion(pluginName, currentVersion, logger, checkForUpdates, autoDownloadUpdates);
         logger.pluginStart();
+        int pluginId = 22541;
+        new Metrics(this, pluginId);
     }
 
-    private void createLocalConfig() {
-        File localFile = new File(getDataFolder(), "local.yml");
-        if (!localFile.exists()) {
-            localFile.getParentFile().mkdirs();
-            saveResource("local.yml", false);
+    private void createMessageConfig() {
+        String language = config.getString("language");
+        File messageFile = new File(getDataFolder(), "lang/messages_" + language + ".yml");
+        if (!messageFile.exists()) {
+            messageFile.getParentFile().mkdirs();
+            saveResource("lang/messages_" + language + ".yml", false);
         }
-
-        localConfig = new YamlConfiguration();
+        FileConfiguration messageConfig = new YamlConfiguration();
         try {
-            localConfig.load(localFile);
+            messageConfig.load(messageFile);
         } catch (IOException | InvalidConfigurationException e) {
-            logger.err("Wystąpił błąd podczas ładowania pliku local.yml: " + e.getMessage());
+            logger.err("Wystąpił błąd podczas ładowania pliku messages_" + language + ".yml: " + e.getMessage());
         }
     }
 
