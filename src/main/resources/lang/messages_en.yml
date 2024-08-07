@@ -1,0 +1,6 @@
+# Version 1.0 messages_en.yml
+
+prefix: "<gradient:#ffaa00:#ffff55:#55ff55:#00aa00>[<b>My-Coins</b>]</gradient> "
+dailyLimit: "You've reached the daily reward limit. Come back tomorrow for more!"
+remainingDailyLimit: "<green>Today you can still get <b>%remainingReward%</b> reward points</green>"
+noDailyLimit: "<red>Unfortunately, you've already exceeded the <b>daily limit</b> of reward points!</red> <reset>Luckily, tomorrow is another day 😉"
