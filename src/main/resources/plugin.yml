@@ -4,8 +4,4 @@ main: pl.mymc.mycoins.My_Coin
 api-version: '1.21'
 authors: [WieszczY, mxLega]
 description: Plugin do nagradzania graczy walutą gry za czas spędzony na serwerze
-dependencies:
-  server:
-    Vault:
-      load: BEFORE
-      required: true
+depend: [EternalCore, Vault]
