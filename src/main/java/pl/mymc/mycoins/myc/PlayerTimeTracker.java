@@ -5,13 +5,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import pl.mymc.mycoins.databases.DatabaseHandler;
-import pl.mymc.mycoins.helpers.MyCoinsLogger;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import static org.bukkit.Bukkit.getServer;
 import pl.mymc.mycoins.helpers.MyCoinsMessages;
+import pl.mymc.mycoins.databases.DatabaseHandler;
+import pl.mymc.mycoins.helpers.MyCoinsLogger;
 
 import java.sql.*;
 import java.time.Instant;
@@ -20,8 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.bukkit.Bukkit.getName;
-import static org.bukkit.Bukkit.getServer;
 
 public class PlayerTimeTracker implements Listener {
     private final DatabaseHandler dbHandler;
@@ -31,11 +30,11 @@ public class PlayerTimeTracker implements Listener {
     private final RankMultiplier rankMultiplier;
     private final Map<UUID, Boolean> handledPlayers = new HashMap<>();
 
-    public PlayerTimeTracker(DatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config, boolean debugMode, FileConfiguration localConfig) {
+    public PlayerTimeTracker(DatabaseHandler dbHandler, MyCoinsLogger logger, FileConfiguration config, FileConfiguration localConfig) {
         this.dbHandler = dbHandler;
         this.config = config;
         this.logger = logger;
-        this.sm = new MyCoinsMessages(getName(), debugMode, localConfig, dbHandler);
+        this.sm = new MyCoinsMessages(localConfig, dbHandler);
         this.rankMultiplier = new RankMultiplier(config);
     }
 
