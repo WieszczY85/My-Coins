@@ -1,3 +1,6 @@
+# Ustawienie domyślnego języka (dostępne to en, pl)
+language: en
+
 # Ustalenia przeliczników i limitów dla graczy
 reward:
   daily_limit: 1000
@@ -25,3 +28,7 @@ checkForUpdates: true
 autoDownloadUpdates: false
 # Tryb debugowania ustawiony na true daje więcej opisów działań w konsoli
 debug: false
+
+# Czy bStats powinien być włączony?
+bStats:
+  enabled: true
